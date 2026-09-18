@@ -1,50 +1,47 @@
 package com.pumbanet.client
 
 import android.content.Intent
-import android.content.SharedPreferences
+import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import androidx.appcompat.app.AppCompatDelegate
+import com.pumbanet.client.model.VpnProfile
+import com.pumbanet.client.utils.PreferencesManager
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var connectButton: Button
-    private lateinit var importConfigButton: Button
-    private lateinit var logoutButton: Button
+    private lateinit var profilesButton: Button
+    private lateinit var settingsButton: Button
     private lateinit var statusText: TextView
-    private lateinit var subscriptionInfoText: TextView
     private var isConnected = false
-
-    private lateinit var prefs: SharedPreferences
-    private var remnawaveApi: RemnawaveApi? = null
-
-    companion object {
-        private const val VPN_PERMISSION_REQUEST = 1
-        private const val IMPORT_CONFIG_REQUEST = 2
-        private const val PREFS_NAME = "pumbanet_login"
-        private const val KEY_SERVER_URL = "server_url"
-        private const val KEY_API_TOKEN = "api_token"
-    }
+    private lateinit var prefsManager: PreferencesManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main_updated)
-
-        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        
+        prefsManager = PreferencesManager(this)
+        
+        // Применение тёмной темы
+        if (prefsManager.isDarkTheme()) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
+        
+        setContentView(R.layout.activity_main)
 
         connectButton = findViewById(R.id.connectButton)
-        importConfigButton = findViewById(R.id.importConfigButton)
-        logoutButton = findViewById(R.id.logoutButton)
+        profilesButton = findViewById(R.id.profilesButton)
+        settingsButton = findViewById(R.id.settingsButton)
         statusText = findViewById(R.id.statusText)
-        subscriptionInfoText = findViewById(R.id.subscriptionInfoText)
 
-        // Инициализация Remnawave API
-        initRemnawaveApi()
+        // Проверка сохранённого конфига
+        updateProfileStatus()
 
         connectButton.setOnClickListener {
             if (!isConnected) {
@@ -54,48 +51,47 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        importConfigButton.setOnClickListener {
-            val intent = Intent(this, ImportConfigActivity::class.java)
-            startActivityForResult(intent, IMPORT_CONFIG_REQUEST)
+        profilesButton.setOnClickListener {
+            val intent = Intent(this, ProfilesActivity::class.java)
+            startActivity(intent)
         }
 
-        logoutButton.setOnClickListener {
-            logout()
+        settingsButton.setOnClickListener {
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
         }
-    }
 
-    private fun initRemnawaveApi() {
-        val serverUrl = prefs.getString(KEY_SERVER_URL, null)
-        val apiToken = prefs.getString(KEY_API_TOKEN, null)
-
-        if (!serverUrl.isNullOrEmpty() && !apiToken.isNullOrEmpty()) {
-            remnawaveApi = RemnawaveApi(serverUrl, apiToken)
-            loadSubscriptionInfo()
-        } else {
-            // Нет данных для входа - перенаправляем на экран логина
-            navigateToLogin()
-        }
-    }
-
-    private fun loadSubscriptionInfo() {
-        lifecycleScope.launch {
-            val api = remnawaveApi ?: return@launch
-            val result = api.getSubscriptions()
-
-            when (result) {
-                is ApiResult.Success -> {
-                    val subscriptions = result.data
-                    if (subscriptions.isNotEmpty()) {
-                        val sub = subscriptions[0]
-                        subscriptionInfoText.text = "${sub.name}\nТрафик: ${sub.getTrafficUsedFormatted()} / ${sub.getTrafficTotalFormatted()}"
-                    } else {
-                        subscriptionInfoText.text = "Нет активных подписок"
-                    }
-                }
-                is ApiResult.Error -> {
-                    subscriptionInfoText.text = "Ошибка загрузки подписки"
-                }
+        // Автоподключение при запуске
+        if (prefsManager.isAutoConnectEnabled() && !VpnService.isRunning()) {
+            val activeProfileId = prefsManager.getActiveProfileId()
+            if (activeProfileId != null) {
+                requestVpnPermission()
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        // Обработка vless:// ссылки при запуске из браузера
+        intent?.data?.let { uri ->
+            if (uri.scheme == "vless") {
+                val importIntent = Intent(this, ConfigImportActivity::class.java).apply {
+                    data = uri
+                }
+                startActivity(importIntent)
+            }
+        }
+    }
+
+    private fun updateProfileStatus() {
+        val activeProfileId = prefsManager.getActiveProfileId()
+        if (activeProfileId != null) {
+            val profile = prefsManager.getProfiles().find { it.id == activeProfileId }
+            profile?.let {
+                statusText.text = "Профиль: ${it.displayName()}"
+            }
+        } else {
+            statusText.text = "Профиль не выбран"
         }
     }
 
@@ -110,16 +106,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        
         if (requestCode == VPN_PERMISSION_REQUEST && resultCode == RESULT_OK) {
             startVpnService()
-        } else if (requestCode == IMPORT_CONFIG_REQUEST && resultCode == RESULT_OK) {
-            // Конфиг импортирован, можно обновить UI
-            Toast.makeText(this, "Конфиг готов к использованию", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun startVpnService() {
         val configJson = loadVlessConfig()
+        if (configJson.isEmpty() || configJson == "{}") {
+            Toast.makeText(this, "Сначала выберите профиль", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         val intent = Intent(this, VpnService::class.java).apply {
             putExtra("CONFIG_JSON", configJson)
         }
@@ -136,79 +135,71 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadVlessConfig(): String {
-        // Загрузка конфига из SharedPreferences (импортированного через QR/ссылку)
-        val configPrefs = getSharedPreferences("pumbanet_config", MODE_PRIVATE)
-        val vlessLink = configPrefs.getString("vless_link", null)
-
-        if (!vlessLink.isNullOrEmpty()) {
-            // Парсинг vless:// ссылки и конвертация в JSON конфиг для Xray
-            return parseVlessLinkToJson(vlessLink)
+        // Загрузка сохранённого конфига
+        val prefs = getSharedPreferences("pumbanet_config", MODE_PRIVATE)
+        val savedConfig = prefs.getString("active_config", null)
+        
+        if (savedConfig != null) {
+            if (savedConfig.startsWith("vless://")) {
+                return parseVlessLink(savedConfig)
+            }
+            return savedConfig
         }
-
-        // Резервный конфиг (заглушка)
-        return """{
-            "inbounds": [{
-                "port": 10808,
-                "listen": "127.0.0.1",
-                "protocol": "socks",
-                "settings": {"auth": "noauth", "udp": true}
-            }],
-            "outbounds": [{
-                "protocol": "vless",
-                "settings": {
-                    "vnext": [{
-                        "address": "your.pumbanet.server",
-                        "port": 443,
-                        "users": [{"id": "USER_UUID_HERE", "encryption": "none", "flow": ""}]
-                    }]
-                },
-                "streamSettings": {
-                    "network": "tcp",
-                    "security": "tls",
-                    "tlsSettings": {"serverName": "your.pumbanet.server"}
-                }
-            }]
-        }"""
+        
+        return ""
     }
 
-    private fun parseVlessLinkToJson(vlessLink: String): String {
-        // Парсинг vless:// UUID@SERVER:PORT?PARAMS
-        // Упрощённая реализация - для продакшена нужен полный парсер
-        try {
-            val uri = android.net.Uri.parse(vlessLink)
-            val uuid = uri.userInfo ?: ""
+    private fun parseVlessLink(vlessLink: String): String {
+        return try {
+            val uri = Uri.parse(vlessLink)
+            val uuid = uri.userInfo
             val host = uri.host ?: ""
-            val port = uri.port.toString()
-            val security = uri.getQueryParameter("security") ?: "tls"
-            val sni = uri.getQueryParameter("sni") ?: host
-            val network = uri.getQueryParameter("type") ?: "tcp"
-
-            return """{
-                "inbounds": [{
-                    "port": 10808,
-                    "listen": "127.0.0.1",
-                    "protocol": "socks",
-                    "settings": {"auth": "noauth", "udp": true}
-                }],
-                "outbounds": [{
-                    "protocol": "vless",
-                    "settings": {
-                        "vnext": [{
-                            "address": "$host",
-                            "port": $port,
-                            "users": [{"id": "$uuid", "encryption": "none", "flow": ""}]
-                        }]
-                    },
-                    "streamSettings": {
-                        "network": "$network",
-                        "security": "$security",
-                        "tlsSettings": {"serverName": "$sni"}
+            val port = uri.port ?: 443
+            
+            """{
+                "inbounds": [
+                    {
+                        "port": 10808,
+                        "listen": "127.0.0.1",
+                        "protocol": "socks",
+                        "settings": {
+                            "auth": "noauth",
+                            "udp": true
+                        }
                     }
-                }]
+                ],
+                "outbounds": [
+                    {
+                        "tag": "proxy",
+                        "protocol": "vless",
+                        "settings": {
+                            "vnext": [
+                                {
+                                    "address": "$host",
+                                    "port": $port,
+                                    "users": [
+                                        {
+                                            "id": "$uuid",
+                                            "encryption": "none",
+                                            "flow": ""
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "streamSettings": {
+                            "network": "tcp",
+                            "security": "tls",
+                            "tlsSettings": {
+                                "serverName": "$host",
+                                "alpn": ["http/1.1"]
+                            }
+                        }
+                    }
+                ]
             }"""
         } catch (e: Exception) {
-            // Ошибка парсинга - возвращаем заглушку
-            return loadVlessConfig()
+            "{}"
         }
     }
 
@@ -216,21 +207,12 @@ class MainActivity : AppCompatActivity() {
         isConnected = connected
         if (connected) {
             connectButton.text = "Отключить"
-            statusText.text = "Статус: Подключено к PumbaNET"
         } else {
             connectButton.text = "Подключить"
-            statusText.text = "Статус: Отключено"
         }
     }
 
-    private fun logout() {
-        prefs.edit().clear().apply()
-        navigateToLogin()
-    }
-
-    private fun navigateToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
-        startActivity(intent)
-        finish()
+    companion object {
+        private const val VPN_PERMISSION_REQUEST = 1
     }
 }
