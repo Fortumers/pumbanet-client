@@ -1,165 +1,214 @@
 package com.pumbanet.client
 
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
+import java.net.HttpURLConnection
+import java.net.URL
 
-class RemnawaveApi(private val baseUrl: String, private val apiKey: String) {
+/**
+ * Клиент для взаимодействия с Remnawave API
+ * Документация: https://docs.rw/api/
+ */
+class RemnawaveApi(
+    private val baseUrl: String,
+    private val apiToken: String
+) {
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .build()
-
-    private val mediaType = "application/json; charset=utf-8".toMediaType()
-
-    /**
-     * Авторизация пользователя по логину/паролю
-     * Возвращает токен доступа
-     */
-    fun login(username: String, password: String): String {
-        val requestBody = JSONObject().apply {
-            put("username", username)
-            put("password", password)
-        }
-
-        val request = Request.Builder()
-            .url("$baseUrl/api/auth/login")
-            .post(requestBody.toString().toRequestBody(mediaType))
-            .addHeader("Content-Type", "application/json")
-            .build()
-
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Empty response")
-
-        if (!response.isSuccessful) {
-            throw Exception("Login failed: ${response.code}")
-        }
-
-        val json = JSONObject(responseBody)
-        return json.getString("access_token")
+    companion object {
+        private const val TAG = "RemnawaveApi"
+        private const val CONNECT_TIMEOUT = 10000
+        private const val READ_TIMEOUT = 30000
     }
 
     /**
-     * Получение списка ключей доступа пользователя
+     * Авторизация по API токену и получение информации о пользователе
      */
-    fun getUserKeys(token: String): List<UserKey> {
-        val request = Request.Builder()
-            .url("$baseUrl/api/user/keys")
-            .get()
-            .addHeader("Authorization", "Bearer $token")
-            .build()
+    suspend fun authenticate(): ApiAuthResult = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$baseUrl/api/user")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.apply {
+                requestMethod = "GET"
+                connectTimeout = CONNECT_TIMEOUT
+                readTimeout = READ_TIMEOUT
+                setRequestProperty("Authorization", "Bearer $apiToken")
+                setRequestProperty("Content-Type", "application/json")
+            }
 
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Empty response")
+            val responseCode = connection.responseCode
+            val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
 
-        if (!response.isSuccessful) {
-            throw Exception("Failed to get keys: ${response.code}")
-        }
-
-        val json = JSONObject(responseBody)
-        val keysArray = json.getJSONArray("keys")
-
-        val keys = mutableListOf<UserKey>()
-        for (i in 0 until keysArray.length()) {
-            val keyObj = keysArray.getJSONObject(i)
-            keys.add(UserKey(
-                id = keyObj.getString("id"),
-                name = keyObj.optString("name", "Key"),
-                vlessLink = keyObj.getString("vlessLink"),
-                expiresAt = keyObj.optString("expiresAt", null)
-            ))
-        }
-
-        return keys
-    }
-
-    /**
-     * Создание нового ключа доступа
-     */
-    fun createKey(token: String, name: String, days: Int = 30): UserKey {
-        val requestBody = JSONObject().apply {
-            put("name", name)
-            put("expirationDays", days)
-        }
-
-        val request = Request.Builder()
-            .url("$baseUrl/api/user/keys")
-            .post(requestBody.toString().toRequestBody(mediaType))
-            .addHeader("Authorization", "Bearer $token")
-            .addHeader("Content-Type", "application/json")
-            .build()
-
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Empty response")
-
-        if (!response.isSuccessful) {
-            throw Exception("Failed to create key: ${response.code}")
-        }
-
-        val json = JSONObject(responseBody)
-        return UserKey(
-            id = json.getString("id"),
-            name = json.getString("name"),
-            vlessLink = json.getString("vlessLink"),
-            expiresAt = json.optString("expiresAt", null)
-        )
-    }
-
-    /**
-     * Удаление ключа доступа
-     */
-    fun deleteKey(token: String, keyId: String) {
-        val request = Request.Builder()
-            .url("$baseUrl/api/user/keys/$keyId")
-            .delete()
-            .addHeader("Authorization", "Bearer $token")
-            .build()
-
-        val response = client.newCall(request).execute()
-        if (!response.isSuccessful) {
-            throw Exception("Failed to delete key: ${response.code}")
+            if (responseCode == 200) {
+                val userJson = JSONObject(responseBody)
+                ApiAuthResult.Success(
+                    userId = userJson.optString("id", "unknown"),
+                    username = userJson.optString("username", "user")
+                )
+            } else {
+                ApiAuthResult.Error("Ошибка авторизации: $responseCode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка авторизации Remnawave", e)
+            ApiAuthResult.Error("Ошибка сети: ${e.message}")
         }
     }
 
     /**
-     * Получение статистики использования
+     * Получение списка подписок пользователя
      */
-    fun getUsage(token: String): UsageStats {
-        val request = Request.Builder()
-            .url("$baseUrl/api/user/usage")
-            .get()
-            .addHeader("Authorization", "Bearer $token")
-            .build()
+    suspend fun getSubscriptions(): ApiResult<List<Subscription>> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$baseUrl/api/subscriptions")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.apply {
+                requestMethod = "GET"
+                connectTimeout = CONNECT_TIMEOUT
+                readTimeout = READ_TIMEOUT
+                setRequestProperty("Authorization", "Bearer $apiToken")
+                setRequestProperty("Content-Type", "application/json")
+            }
 
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Empty response")
+            val responseCode = connection.responseCode
+            val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
 
-        if (!response.isSuccessful) {
-            throw Exception("Failed to get usage: ${response.code}")
+            if (responseCode == 200) {
+                val subscriptions = parseSubscriptions(responseBody)
+                ApiResult.Success(subscriptions)
+            } else {
+                ApiResult.Error("Ошибка получения подписок: $responseCode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка получения подписок", e)
+            ApiResult.Error("Ошибка сети: ${e.message}")
         }
+    }
 
-        val json = JSONObject(responseBody)
-        return UsageStats(
-            usedBytes = json.getLong("usedBytes"),
-            totalBytes = json.getLong("totalBytes"),
-            resetDate = json.optString("resetDate", null)
-        )
+    /**
+     * Получение конфига подписки (Vless ссылка)
+     */
+    suspend fun getSubscriptionConfig(subscriptionId: String): ApiResult<String> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$baseUrl/api/subscriptions/$subscriptionId/config")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.apply {
+                requestMethod = "GET"
+                connectTimeout = CONNECT_TIMEOUT
+                readTimeout = READ_TIMEOUT
+                setRequestProperty("Authorization", "Bearer $apiToken")
+                setRequestProperty("Content-Type", "application/json")
+            }
+
+            val responseCode = connection.responseCode
+            val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
+
+            if (responseCode == 200) {
+                val configJson = JSONObject(responseBody)
+                val vlessLink = configJson.optString("vlessLink", "")
+                if (vlessLink.isNotEmpty()) {
+                    ApiResult.Success(vlessLink)
+                } else {
+                    ApiResult.Error("Пустой конфиг")
+                }
+            } else {
+                ApiResult.Error("Ошибка получения конфига: $responseCode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка получения конфига", e)
+            ApiResult.Error("Ошибка сети: ${e.message}")
+        }
+    }
+
+    /**
+     * Получение подписки по ссылке (subscription URL)
+     */
+    suspend fun getSubscriptionByLink(subscriptionUrl: String): ApiResult<String> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL(subscriptionUrl)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.apply {
+                requestMethod = "GET"
+                connectTimeout = CONNECT_TIMEOUT
+                readTimeout = READ_TIMEOUT
+                instanceFollowRedirects = true
+            }
+
+            val responseCode = connection.responseCode
+            val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
+
+            if (responseCode == 200) {
+                // Возвращает base64 закодированный список подписок
+                ApiResult.Success(responseBody)
+            } else {
+                ApiResult.Error("Ошибка получения подписки: $responseCode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка получения подписки по ссылке", e)
+            ApiResult.Error("Ошибка сети: ${e.message}")
+        }
+    }
+
+    private fun parseSubscriptions(jsonString: String): List<Subscription> {
+        val subscriptions = mutableListOf<Subscription>()
+        try {
+            val jsonArray = JSONObject(jsonString).getJSONArray("data")
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                subscriptions.add(
+                    Subscription(
+                        id = obj.optString("id", ""),
+                        name = obj.optString("name", "Подписка"),
+                        trafficTotal = obj.optLong("trafficTotal", 0),
+                        trafficUsed = obj.optLong("trafficUsed", 0),
+                        expiryDate = obj.optString("expiryDate", "")
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка парсинга подписок", e)
+        }
+        return subscriptions
     }
 }
 
-data class UserKey(
+// Модели данных
+data class Subscription(
     val id: String,
     val name: String,
-    val vlessLink: String,
-    val expiresAt: String?
-)
+    val trafficTotal: Long,
+    val trafficUsed: Long,
+    val expiryDate: String
+) {
+    fun getTrafficPercent(): Float {
+        return if (trafficTotal > 0) (trafficUsed.toFloat() / trafficTotal) * 100 else 0f
+    }
 
-data class UsageStats(
-    val usedBytes: Long,
-    val totalBytes: Long,
-    val resetDate: String?
-)
+    fun getTrafficUsedFormatted(): String {
+        return formatBytes(trafficUsed)
+    }
+
+    fun getTrafficTotalFormatted(): String {
+        return formatBytes(trafficTotal)
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        return when {
+            bytes < 1024 -> "$bytes B"
+            bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+            bytes < 1024 * 1024 * 1024 -> "${bytes / (1024 * 1024)} MB"
+            else -> "${bytes / (1024 * 1024 * 1024)} GB"
+        }
+    }
+}
+
+// Результаты API
+sealed class ApiResult<out T> {
+    data class Success<out T>(val data: T) : ApiResult<T>()
+    data class Error(val message: String) : ApiResult<Nothing>()
+}
+
+sealed class ApiAuthResult {
+    data class Success(val userId: String, val username: String) : ApiAuthResult()
+    data class Error(val message: String) : ApiAuthResult()
+}
