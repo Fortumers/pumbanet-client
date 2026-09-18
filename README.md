@@ -1,138 +1,143 @@
 # PumbaNET Client
 
-VPN-клиент для сервиса PumbaNET на протоколе Vless с интеграцией Remnawave API.
+VPN-клиент для сервиса PumbaNET на протоколе Vless с поддержкой Remnawave API и всеми премиум-функциями (1-15).
 
-## Описание
+## 🚀 Полный список функций
 
-Приложение предоставляет безопасное подключение к серверам PumbaNET через протокол Vless с поддержкой:
-- Импорт конфигов через QR-код или ссылку vless://
-- Интеграция с Remnawave API для автоматического получения подписок
-- Фоновый VPN-сервис на базе Xray-core
+### Базовые функции (1-8) ✅
+- ✅ Vless + Remnawave API
+- ✅ Импорт конфига (QR, vless://, deep link)
+- ✅ Мультипрофильность
+- ✅ Тест пинга
+- ✅ Тёмная тема
+- ✅ Виджет на главный экран
+- ✅ Статистика трафика
+- ✅ Split Tunneling
+- ✅ Автоподключение
+- ✅ Kill Switch
 
-## Особенности
+### 🔥 Продвинутые функции (9-15)
 
-- ✅ Поддержка протокола Vless
-- ✅ Сканирование QR-кодов конфигов
-- ✅ Импорт из ссылки vless://
-- ✅ Интеграция с Remnawave API
-- ✅ Автоматическая авторизация
-- ✅ Отображение трафика подписки
-- ✅ Минималистичный UI
-- ✅ Фоновый VPN-сервис
+#### 9. Push-уведомления
+- **PushNotificationManager.kt** — менеджер уведомлений
+- Каналы: подключение, подписка, новости, общие
+- Уведомления о:
+  - Подключении/отключении VPN
+  - Конце подписки (за N дней)
+  - Новостях PumbaNET
+  - Важных событиях
+- Поддержка Android 13+ (POST_NOTIFICATIONS)
 
-## Структура проекта
+#### 10. Реферальная программа
+- **ReferralManager.kt** — трекинг рефералов
+- Генерация уникального кода (PUMB-XXXX)
+- Реферальная ссылка для sharing
+- Трекер количества рефералов
+- Бонусные баллы за приглашения
+- Интеграция с сервером через API
+- Применение реферального кода при регистрации
+
+#### 11. Синхронизация между устройствами
+- **CloudSyncManager.kt** — облачная синхронизация
+- Экспорт/импорт профилей в JSON
+- Поддержка Google Drive / Dropbox
+- QR-передача между устройствами
+- Merge локальных и облачных данных
+- Конфликт-резолюшн (новые записи побеждают)
+- Timestamp последней синхронизации
+
+#### 12. iOS версия (документация)
+- **ios/README.md** — полное руководство
+- Swift + NetworkExtension
+- PacketTunnelProvider для VPN
+- Аналогичный функционал Android
+- Интеграция с Xray-core
+- Remnawave API поддержка
+
+#### 13. Desktop клиенты (документация)
+- **desktop/README.md** — Tauri проект
+- Rust бэкенд + React/Vue фронтенд
+- Поддержка Windows/macOS/Linux
+- Системный трей
+- Автозапуск при старте ОС
+- Кроссплатформенная сборка
+
+#### 14. Автообновление конфигов
+- **ConfigAutoUpdateManager.kt** — авто-апдейт
+- Периодическая проверка сервера (каждые 6 часов)
+- Проверка доступности IP:port
+- Авто-получение нового конфига при изменении
+- Уведомление о новых серверах
+- Фоновая проверка через WorkManager
+
+#### 15. Аналитика и логи
+- **AnalyticsManager.kt** — логирование и метрики
+- Лог подключений (успех/ошибка, длительность)
+- Лог ошибок (type, message, stack trace)
+- Лог событий (действия пользователя)
+- Метрики использования (трафик, сессии)
+- Экспорт логов в файл (для отладки)
+- Авто-очистка старых логов (>30 дней)
+- Отправка на сервер аналитики
+
+## 📁 Структура проекта
 
 ```
 pumbanet-client/
-├── app/
-│   ├── src/main/
-│   │   ├── java/com/pumbanet/client/
-│   │   │   ├── MainActivity.kt          # Главный экран
-│   │   │   ├── LoginActivity.kt         # Экран входа (Remnawave)
-│   │   │   ├── ImportConfigActivity.kt  # Импорт конфига (QR/vless)
-│   │   │   ├── VpnService.kt            # VPN-сервис
-│   │   │   └── RemnawaveApi.kt          # API клиент Remnawave
-│   │   ├── res/layout/
-│   │   │   ├── activity_login.xml
-│   │   │   ├── activity_main_updated.xml
-│   │   │   └── activity_import_config.xml
-│   │   └── AndroidManifest.xml
-│   └── build.gradle.kts
-├── config/
-│   └── vless-config-example.json
+├── app/src/main/
+│   ├── java/com/pumbanet/client/
+│   │   ├── MainActivity.kt
+│   │   ├── VpnService.kt
+│   │   ├── ConfigImportActivity.kt
+│   │   ├── ProfilesActivity.kt
+│   │   ├── SettingsActivity.kt
+│   │   ├── SelectAppsActivity.kt
+│   │   ├── PumbaNetWidgetProvider.kt
+│   │   ├── model/
+│   │   │   ├── VpnProfile.kt
+│   │   │   ├── ConnectionStats.kt
+│   │   │   └── AppInfo.kt
+│   │   └── utils/
+│   │       ├── PreferencesManager.kt
+│   │       ├── PingTest.kt
+│   │       ├── PushNotificationManager.kt (9)
+│   │       ├── ReferralManager.kt (10)
+│   │       ├── CloudSyncManager.kt (11)
+│   │       ├── ConfigAutoUpdateManager.kt (14)
+│   │       └── AnalyticsManager.kt (15)
+│   └── res/
+├── ios/ (12)
+│   └── README.md
+├── desktop/ (13)
+│   └── README.md
 └── README.md
 ```
 
-## Требования
+## 🛠 Требования
 
 - Android 8.0+ (API 26)
 - Android Studio Arctic Fox+
 - Xray-core binary (ARM64)
-- Remnawave Panel 3.0+ (для API интеграции)
 
-## Сборка
+## 📦 Сборка
 
-### 1. Клонирование
+1. Откройте проект в Android Studio
+2. Добавьте xray-core binary в `app/src/main/assets/xray`
+3. Настройте API endpoint в `RemnawaveApiClient.kt`
+4. Соберите проект: `./gradlew assembleDebug`
 
-```bash
-git clone https://github.com/Fortumers/pumbanet-client.git
-cd pumbanet-client
-```
+## 🔗 Ссылки
 
-### 2. Добавление Xray-core
+- Репозиторий: https://github.com/Fortumers/pumbanet-client
+- PR #1: Импорт конфигов
+- PR #2: Премиум фичи 1-8
+- PR #3: Продвинутые фичи 9-15
 
-Скачайте xray-core для Android (ARM64) и поместите в:
-```
-app/src/main/assets/xray
-```
-
-Или интегрируйте через JNI/библиотеку.
-
-### 3. Сборка APK
-
-```bash
-./gradlew assembleDebug
-```
-
-APK будет в: `app/build/outputs/apk/debug/app-debug.apk`
-
-## Настройка Remnawave API
-
-### 1. Создание API токена
-
-В панели Remnawave:
-1. Откройте **Settings → API Tokens**
-2. Нажмите **Create Token**
-3. Скопируйте токен
-
-### 2. Вход в приложение
-
-1. Запустите приложение
-2. Введите URL вашей панели (например, `https://panel.pumbanet.local`)
-3. Вставьте API токен
-4. Нажмите **Войти**
-
-### 3. Импорт конфига
-
-После входа:
-- Нажмите **Импортировать конфиг**
-- Отсканируйте QR-код или вставьте ссылку `vless://`
-- Конфиг сохранится и будет использоваться для подключения
-
-## API Endpoints (Remnawave)
-
-Приложение использует следующие endpoints:
-
-| Endpoint | Метод | Описание |
-|----------|-------|----------|
-| `/api/user` | GET | Информация о пользователе |
-| `/api/subscriptions` | GET | Список подписок |
-| `/api/subscriptions/{id}/config` | GET | Конфиг подписки |
-
-## Технологии
-
-- **Kotlin** — основной язык
-- **AndroidX** — современные компоненты Android
-- **Kotlin Coroutines** — асинхронные запросы к API
-- **ZXing** — сканирование QR-кодов
-- **Xray-core** — ядро VPN (Vless protocol)
-
-## Лицензия
+## 🏷 Лицензия
 
 MIT
 
-## Контакты
+## 📞 Контакты
 
 Владелец: jurnest resterr (Fortumers)  
-Сервис: PumbaNET (Vless + Remnawave)  
-Локация: Helsinki, Finland
-
-## Скриншоты
-
-*Экран входа через Remnawave API*
-*Главный экран с кнопкой подключения*
-*Экран импорта конфига (QR/vless://)*
-
----
-
-**Примечание:** Для работы требуется настроенный сервер PumbaNET с панелью Remnawave.
+Сервис: PumbaNET (Vless + Remnawave)
