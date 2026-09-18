@@ -14,15 +14,11 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // Настройки для выпуска
         vectorDrawables.useSupportLibrary = true
     }
 
-    // Настройки подписи релизной версии
     signingConfigs {
         create("release") {
-            // Для отладки используем debug keystore
-            // Для продакшена замените на ваш release keystore
             storeFile = file("../keystore/release-key.jks")
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "changeit"
             keyAlias = System.getenv("KEY_ALIAS") ?: "pumbanet"
@@ -55,13 +51,12 @@ android {
         jvmTarget = "17"
     }
 
-    // Разрешить сборку нескольких APK
     splits {
         abi {
             isEnable = true
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true // Создать универсальный APK
+            isUniversalApk = true
         }
     }
 }
@@ -91,4 +86,7 @@ dependencies {
 
     // Biometric
     implementation("androidx.biometric:biometric:1.1.0")
+
+    // EncryptedSharedPreferences (безопасное хранение токенов)
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
 }
