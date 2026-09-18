@@ -11,3 +11,17 @@ local.properties
 
 # Xray binary (add manually)
 app/src/main/assets/xray
+
+# Keystore files (IMPORTANT!)
+keystore/*.jks
+keystore/*.keystore
+keystore/*.properties
+*.jks
+*.keystore
+
+# Build outputs
+app/build/
+!app/build/outputs/apk/
+
+# Secrets
+secrets.properties
