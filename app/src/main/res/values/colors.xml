@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary">#6366F1</color>
+    <color name="primary_dark">#4F46E5</color>
+    <color name="primary_light">#A5B4FC</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secondary Colors -->
+    <color name="secondary">#10B981</color>
+    <color name="secondary_dark">#059669</color>
+    <color name="secondary_light">#6EE7B7</color>
+    <color name="on_secondary">#FFFFFF</color>
+
+    <!-- Background Colors (Dark Theme) -->
+    <color name="background_dark">#0F172A</color>
+    <color name="surface_dark">#1E293B</color>
+    <color name="surface_variant_dark">#334155</color>
+    <color name="on_background_dark">#F1F5F9</color>
+    <color name="on_surface_dark">#E2E8F0</color>
+
+    <!-- Background Colors (Light Theme) -->
+    <color name="background_light">#F8FAFC</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="surface_variant_light">#F1F5F9</color>
+    <color name="on_background_light">#0F172A</color>
+    <color name="on_surface_light">#334155</color>
+
+    <!-- Status Colors -->
+    <color name="success">#10B981</color>
+    <color name="warning">#F59E0B</color>
+    <color name="error">#EF4444</color>
+    <color name="info">#3B82F6</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#6366F1</color>
+    <color name="gradient_middle">#8B5CF6</color>
+    <color name="gradient_end">#EC4899</color>
+
+    <!-- Glassmorphism -->
+    <color name="glass_background">#1E293B</color>
+    <color name="glass_border">#334155</color>
+    <color name="glass_overlay">#0F172A</color>
+
+    <!-- Transparent -->
+    <color name="transparent">#00000000</color>
+    <color name="black_50">#80000000</color>
+    <color name="white_10">#1AFFFFFF</color>
+</resources>
