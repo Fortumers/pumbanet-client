@@ -18,7 +18,7 @@
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Статус: Отключено"
+        android:text="Профиль не выбран"
         android:textSize="18sp"
         android:layout_marginBottom="32dp" />
 
@@ -27,7 +27,23 @@
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:text="Подключить"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/profilesButton"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Профили"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Настройки"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
     <TextView
         android:layout_width="wrap_content"
