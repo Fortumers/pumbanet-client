@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pumba_primary">#6366F1</color>
+    <color name="pumba_primary_dark">#4338CA</color>
+    <color name="pumba_secondary">#10B981</color>
+    <color name="pumba_background">#0F172A</color>
+    <color name="pumba_surface">#1E293B</color>
+    <color name="pumba_on_surface">#F8FAFC</color>
+    <color name="pumba_muted">#94A3B8</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+</resources>
