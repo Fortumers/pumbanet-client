@@ -13,12 +13,17 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -30,6 +35,15 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
 }
 
 dependencies {
@@ -38,11 +52,5 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-    
-    // ZXing для сканирования QR-кодов
-    implementation("com.google.zxing:core:3.5.2")
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    
-    // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
