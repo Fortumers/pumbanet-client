@@ -1,0 +1,67 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PumbaNET-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: app/build/outputs/apk/debug/app-debug.apk
+        body: |
+          ## PumbaNET Client
+          
+          VPN клиент для сервиса PumbaNET на протоколе Vless.
+          
+          ### Установка
+          1. Скачайте APK файл
+          2. Разрешите установку из неизвестных источников
+          3. Установите и запустите
+          
+          ### Требования
+          - Android 8.0+
+          - 50MB свободного места
+          
+          ### Функции
+          - ✅ Vless + Remnawave API
+          - ✅ Импорт через QR/vless://
+          - ✅ Мультипрофильность
+          - ✅ Тёмная тема
+          - ✅ Split Tunneling
+          - ✅ Kill Switch
+          
+          ### Поддержка
+          https://github.com/Fortumers/pumbanet-client/issues
+        draft: false
+        prerelease: false
+        name: PumbaNET Client
