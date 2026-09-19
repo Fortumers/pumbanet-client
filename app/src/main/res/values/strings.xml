@@ -2,4 +2,12 @@
 <resources>
     <string name="app_name">PumbaNET</string>
     <string name="app_tagline">Твой быстрый VPN</string>
+    <string name="vpn_channel_name">VPN Service</string>
+    <string name="vpn_channel_description">Уведомление о работе VPN</string>
+    <string name="vpn_notification_title">PumbaNET VPN</string>
+    <string name="vpn_notification_text">Подключение...</string>
+    <string name="vpn_status_connected">Подключено</string>
+    <string name="vpn_status_disconnected">Отключено</string>
+    <string name="connect">Подключить</string>
+    <string name="disconnect">Отключить</string>
 </resources>
