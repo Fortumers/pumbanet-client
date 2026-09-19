@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PumbaNET</string>
-    <string name="app_tagline">Secure VLESS client</string>
-    <string name="vpn_status_disconnected">Отключено</string>
-    <string name="vpn_status_connected">Подключено</string>
-    <string name="connect">Подключить</string>
-    <string name="disconnect">Отключить</string>
-    <string name="vpn_channel_name">PumbaNET VPN</string>
-    <string name="vpn_channel_description">Статус VPN-подключения PumbaNET</string>
-    <string name="vpn_notification_title">PumbaNET</string>
-    <string name="vpn_notification_text">VPN сервис активен</string>
+    <string name="app_tagline">Твой быстрый VPN</string>
 </resources>
