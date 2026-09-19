@@ -1,40 +1,219 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="32dp">
+    android:background="@color/background_dark">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="PumbaNET"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
 
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Статус: Отключено"
-        android:textSize="18sp"
-        android:layout_marginBottom="32dp" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:title="PumbaNET"
+            app:titleTextColor="@color/on_background_dark"
+            app:titleCentered="true" />
 
-    <Button
-        android:id="@+id/connectButton"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="Подключить"
-        android:textSize="18sp" />
+    </com.google.android.material.appbar.AppBarLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Vless + Remnawave"
-        android:textSize="14sp"
-        android:textColor="#888888"
-        android:layout_marginTop="32dp" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Header Card with Gradient -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="32dp"
+                    android:background="@drawable/gradient_background"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🚀 PumbaNET"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/white" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vless + Remnawave"
+                        android:textSize="14sp"
+                        android:textColor="@color/white_10"
+                        android:layout_marginTop="8dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Connection Status Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/statusCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/surface_dark"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/glass_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/statusIcon"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@drawable/ic_vpn_off"
+                        app:tint="@color/error" />
+
+                    <TextView
+                        android:id="@+id/statusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Отключено"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface_dark"
+                        android:layout_marginTop="16dp" />
+
+                    <TextView
+                        android:id="@+id/profileNameText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Профиль не выбран"
+                        android:textSize="14sp"
+                        android:textColor="@color/on_surface_dark"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:id="@+id/trafficText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="↑ 0 MB ↓ 0 MB"
+                        android:textSize="12sp"
+                        android:textColor="@color/on_surface_dark"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Main Connect Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/connectButton"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Подключить"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:backgroundTint="@color/primary"
+                android:layout_marginBottom="16dp"
+                android:elevation="8dp" />
+
+            <!-- Quick Actions Grid -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Быстрые действия"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/on_surface_dark"
+                android:layout_marginBottom="16dp" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="2">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/profilesButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="📋 Профили"
+                    android:textSize="14sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/glass_border" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/settingsButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="⚙️ Настройки"
+                    android:textSize="14sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/glass_border" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/importButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginTop="8dp"
+                    android:text="📥 Импорт"
+                    android:textSize="14sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/glass_border" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/statsButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:text="📊 Статистика"
+                    android:textSize="14sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/glass_border" />
+
+            </GridLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
